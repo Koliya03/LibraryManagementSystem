@@ -1,0 +1,37 @@
+# Visual Studio user-specific files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Tt]emp/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+*.cache/
+*.dll
+*.pdb
+
+# Publish and deployment
+publish/
+out/
+*.Publish.xml
+
+# Docker
+docker-compose.override.yml
+docker-compose.debug.yml
+
+# Others
+*.vsidx
+*.dbmdl
+*.bak
+*.log
+*.vscode/
