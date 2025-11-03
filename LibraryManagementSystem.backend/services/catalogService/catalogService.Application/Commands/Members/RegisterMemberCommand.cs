@@ -4,9 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Book.Events
+namespace Application.Commands.Members
 {
-    public record BookRetiredEvent(
-        Guid BookId
+    public record RegisterMemberCommand(
+        string FullName ,
+        string Email 
     );
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Member.Events
+namespace Domain.Members.Events
 {
     public record MemberRegisteredEvent(
         Guid MemberId,

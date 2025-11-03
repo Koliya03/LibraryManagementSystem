@@ -1,5 +1,5 @@
 ﻿using Application.Interfaces;
-using Domain.Book.Entities;
+using Domain.Books.Entities;
 using Marten;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Infranstructure.Repositories
 {
-    public class bookRepository:IBookRepository
+    public class bookRepository : IBookRepository
     {
         private readonly IDocumentSession _session;
 
@@ -20,7 +20,7 @@ namespace Infranstructure.Repositories
 
         public async Task AddBookAsync(Book book)
         {
-           _session.Store(book);
+            _session.Store(book);
             await _session.SaveChangesAsync();
         }
 
@@ -40,4 +40,5 @@ namespace Infranstructure.Repositories
             await _session.SaveChangesAsync();
         }
     }
+
 }

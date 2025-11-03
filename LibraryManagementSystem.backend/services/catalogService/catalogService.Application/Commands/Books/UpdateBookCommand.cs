@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Book.Events
+namespace Application.Commands.Books
 {
-    public record BookRegisteredEvent(
+    public record UpdateBookCommand(
        Guid BookId,
        string Title,
        string Author,
-       string ISBN,
-       int TotalQuantity
+       int TotalQuantity,
+       int AvailableQuantity
    );
 }
