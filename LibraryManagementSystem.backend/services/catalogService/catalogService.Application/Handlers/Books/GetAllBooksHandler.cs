@@ -1,5 +1,8 @@
-﻿using Application.Interfaces;
+﻿using Application.DTO;
+using Application.Interfaces;
 using Application.Queries.Book;
+using Application.ReadModels;
+using AutoMapper;
 using Domain.Books.Entities;
 using System;
 using System.Collections.Generic;
@@ -14,16 +17,34 @@ namespace Application.Handlers.Books
 {
     public class GetAllBooksHandler
     {
-        private readonly IBookRepository _repository;
+        private readonly IReadStore _readStore;
+        private readonly IMapper _mapper;
 
-        public GetAllBooksHandler(IBookRepository repository)
+        public GetAllBooksHandler(IReadStore readStore, IMapper mapper)
         {
-            _repository = repository;
+            _readStore = readStore;
+            _mapper = mapper;
         }
 
-        public async Task<List<Book>> Handle(GetAllBooksQuery query)
+        public List<BookResponseDto> Handle(GetAllBooksQuery query)
         {
-            return await _repository.GetAllAsync();
+            List<BookReadModel> models = _readStore.ListAsync<BookReadModel>().GetAwaiter().GetResult();
+            List<BookResponseDto> list = new List<BookResponseDto>();
+
+            if (models != null)
+            {
+                int i = 0;
+                int count = models.Count;
+                while (i < count)
+                {
+                    BookResponseDto dto = _mapper.Map<BookResponseDto>(models[i]);
+                    list.Add(dto);
+                    i = i + 1;
+                }
+            }
+
+            return list;
         }
     }
 }
+

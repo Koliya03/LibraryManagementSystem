@@ -1,5 +1,8 @@
-﻿using Application.Interfaces;
+﻿using Application.DTO;
+using Application.Interfaces;
 using Application.Queries.Book;
+using Application.ReadModels;
+using AutoMapper;
 using Domain.Books.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,18 +13,24 @@ using Wolverine;
 
 namespace Application.Handlers.Books
 {
-    public class GetBooksByIdHandler
+    public class GetBookByIdHandler
     {
-        private readonly IBookRepository _repository;
+        private readonly IReadStore _readStore;
+        private readonly IMapper _mapper;
 
-        public GetBooksByIdHandler(IBookRepository repository)
+        public GetBookByIdHandler(IReadStore readStore, IMapper mapper)
         {
-            _repository = repository;
+            _readStore = readStore;
+            _mapper = mapper;
         }
 
-        public async Task<Book> Handle(GetBookByIdQuery query)
+        public BookResponseDto Handle(GetBookByIdQuery query)
         {
-            return await _repository.GetByIdAsync(query.BookId);
+            BookReadModel model = _readStore.LoadAsync<BookReadModel>(query.BookId).GetAwaiter().GetResult();
+            if (model == null) throw new Exception("Book not found.");
+
+            BookResponseDto dto = _mapper.Map<BookResponseDto>(model);
+            return dto;
         }
     }
 }

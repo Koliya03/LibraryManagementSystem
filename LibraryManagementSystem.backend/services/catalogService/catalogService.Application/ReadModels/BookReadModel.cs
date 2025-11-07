@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Books.Entities
+namespace Application.ReadModels
 {
-    public class Book
+    public class BookReadModel
     {
         public Guid Id { get; set; }
-        public string Title { get; set; }
-        public string Author { get; set; }
-        public string ISBN { get; set; }
+        public string Title { get; set; } = default!;
+        public string Author { get; set; } = default!;
+        public string ISBN { get; set; } = default!;
         public int TotalQuantity { get; set; }
         public int AvailableQuantity { get; set; }
         public bool IsRetired { get; set; }

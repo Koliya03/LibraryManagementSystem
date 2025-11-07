@@ -1,5 +1,6 @@
 ﻿using Application.Commands.Books;
 using Application.Interfaces;
+using Domain.Books.Entities;
 using Domain.Books.Events;
 using System;
 using System.Collections.Generic;
@@ -10,38 +11,24 @@ using Wolverine;
 
 namespace Application.Handlers.Books
 {
-    public class UpateBookHandler
+    public class UpdateBookHandler
     {
-        private readonly IBookRepository _repository;
-        public UpateBookHandler(IBookRepository repository)
-        {  
-            _repository = repository;
-        }
+        private readonly IEventStore _eventStore;
 
-        public async Task Handle(UpdateBookCommand command,IMessageBus context)
+        public UpdateBookHandler(IEventStore eventStore)
         {
-            var book = await _repository.GetByIdAsync(command.BookId);
-            if (book == null)
-            {
-                Console.WriteLine("Book cannot be found");
-                return;
-            }
-
-            book.Title = command.Title;
-            book.Author = command.Author;
-            book.TotalQuantity = command.TotalQuantity;
-            book.AvailableQuantity = command.AvailableQuantity;
-
-            await _repository.UpdateBookAsync(book);
-
-            await context.PublishAsync(new BookUpdatedEvent(
-                book.Id,
-                book.Title,
-                book.Author,
-                book.TotalQuantity,
-                book.AvailableQuantity
-            ));
+            _eventStore = eventStore;
         }
 
+        public async Task Handle(UpdateBookCommand command)
+        {
+            Book book = await _eventStore.AggregateAsync<Book>(command.BookId);
+            if (book == null) throw new Exception("Book not found.");
+
+            BookUpdatedEvent @event = book.UpdateInfo(command.Title, command.Author, command.ISBN);
+
+            _eventStore.Append(command.BookId, @event);
+            await _eventStore.SaveChangesAsync();
+        }
     }
 }

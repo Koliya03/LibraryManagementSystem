@@ -7,10 +7,11 @@ using System.Threading.Tasks;
 namespace Application.Commands.Books
 {
     public record UpdateBookCommand(
-       Guid BookId,
-       string Title,
-       string Author,
-       int TotalQuantity,
-       int AvailableQuantity
+        Guid BookId,
+        string Title,
+        string Author,
+        string ISBN,
+        int TotalQuantity,
+        int AvailableQuantity
    );
 }

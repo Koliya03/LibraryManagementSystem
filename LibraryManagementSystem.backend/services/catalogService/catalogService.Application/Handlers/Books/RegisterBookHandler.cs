@@ -14,35 +14,28 @@ namespace Application.Handlers.Books
 {
     public class RegisterBookHandler
     {
-        private readonly IBookRepository _repository;
+        private readonly IEventStore _eventStore;
 
-        public RegisterBookHandler(IBookRepository repository)
+        public RegisterBookHandler(IEventStore eventStore)
         {
-            _repository = repository;
+            _eventStore = eventStore;
         }
 
-        public async Task Handle(RegisterBookCommand command, IMessageContext context)
+        public async Task<Guid> Handle(RegisterBookCommand command)
         {
-            var book = new Book
-            {
-                Id = Guid.NewGuid(),
-                Title = command.Title,
-                Author = command.Author,
-                ISBN = command.ISBN,
-                TotalQuantity = command.TotalQuantity,
-                AvailableQuantity = command.TotalQuantity,
-                IsRetired = false
-            };
-            await _repository.AddBookAsync(book);
+            Guid newId = Guid.NewGuid();
 
-            await context.PublishAsync(new BookRegisteredEvent(
-                book.Id,
-                book.Title,
-                book.Author,
-                book.ISBN,
-                book.TotalQuantity
-            ));
+            BookRegisteredEvent e = Book.Register(
+                newId,
+                command.Title,
+                command.Author,
+                command.ISBN,
+                command.TotalQuantity
+            );
 
+            _eventStore.StartStream<Book>(newId, e);
+            await _eventStore.SaveChangesAsync();
+            return newId;
         }
     }
 }

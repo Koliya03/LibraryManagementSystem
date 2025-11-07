@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,5 +11,5 @@ namespace Domain.Members.Events
         Guid MemberId,
         string FullName,
         string Email
-    );
+    ) : IDomainEvent;
 }

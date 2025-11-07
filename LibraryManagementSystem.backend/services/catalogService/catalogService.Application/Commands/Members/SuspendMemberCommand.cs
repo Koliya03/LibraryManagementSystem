@@ -6,8 +6,5 @@ using System.Threading.Tasks;
 
 namespace Application.Commands.Members
 {
-    public record UpdateMemberStatusCommand(
-        Guid Id,
-        bool ActiveStatus
-    );
+    public record SuspendMemberCommand(Guid MemberId);
 }

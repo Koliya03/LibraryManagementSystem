@@ -1,5 +1,8 @@
-﻿using Application.Interfaces;
+﻿using Application.DTO;
+using Application.Interfaces;
 using Application.Queries.Members;
+using Application.ReadModels;
+using AutoMapper;
 using Domain.Members.Entities;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
@@ -12,16 +15,21 @@ namespace Application.Handlers.Members
 {
     public class GetMemberByIdHandler
     {
-        private readonly IMemberRepository _repository;
+        private readonly IReadStore _readStore;
+        private readonly IMapper _mapper;
 
-        public GetMemberByIdHandler(IMemberRepository repository)
+        public GetMemberByIdHandler(IReadStore readStore, IMapper mapper)
         {
-            _repository = repository;
+            _readStore = readStore;
+            _mapper = mapper;
         }
 
-        public async Task<Member> Handle(GetMemberByIdQuery query)
+        public async Task<MemberResponseDto?> Handle(Guid memberId)
         {
-            return await _repository.GetByIdAsync(query.MemberId);
+            MemberReadModel model = await _readStore.LoadAsync<MemberReadModel>(memberId);
+            if (model == null) return null;
+            MemberResponseDto dto = _mapper.Map<MemberResponseDto>(model);
+            return dto;
         }
     }
 }

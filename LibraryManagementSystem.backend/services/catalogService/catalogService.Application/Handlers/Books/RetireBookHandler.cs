@@ -1,5 +1,6 @@
 ﻿using Application.Commands.Books;
 using Application.Interfaces;
+using Domain.Books.Entities;
 using Domain.Books.Events;
 using System;
 using System.Collections.Generic;
@@ -12,23 +13,22 @@ namespace Application.Handlers.Books
 {
     public class RetireBookHandler
     {
-        private readonly IBookRepository _repository;
+        private readonly IEventStore _eventStore;
 
-        public RetireBookHandler(IBookRepository repository)
+        public RetireBookHandler(IEventStore eventStore)
         {
-            _repository = repository;
+            _eventStore = eventStore;
         }
 
-        public async Task Handle(RetireBookCommand command, IMessageBus context)
+        public async Task Handle(RetireBookCommand command)
         {
-            var book = await _repository.GetByIdAsync(command.BookId);
-            if (book != null)
-            {
-                book.IsRetired = true;
-            }
-            await _repository.UpdateBookAsync(book);
+            Book book = await _eventStore.AggregateAsync<Book>(command.BookId);
+            if (book == null) throw new Exception("Book not found.");
 
-            await context.PublishAsync(new BookRetiredEvent(book.Id));
+            BookRetiredEvent @event = book.Retire();
+
+            _eventStore.Append(command.BookId, @event);
+            await _eventStore.SaveChangesAsync();
         }
     }
 }

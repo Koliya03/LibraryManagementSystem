@@ -1,5 +1,8 @@
-﻿using Application.Commands.Members;
+﻿using Application.Commands.Books;
+using Application.Commands.Members;
 using Application.Interfaces;
+using Domain.Books.Entities;
+using Domain.Books.Events;
 using Domain.Members.Entities;
 using Domain.Members.Events;
 using ImTools;
@@ -14,25 +17,20 @@ namespace Application.Handlers.Members
 {
     public class RegisterMemberHandler
     {
-        private readonly IMemberRepository _repository;
+        private readonly IEventStore _eventStore;
 
-        public RegisterMemberHandler(IMemberRepository repository)
+        public RegisterMemberHandler(IEventStore eventStore)
         {
-            _repository = repository;
+            _eventStore = eventStore;
         }
 
-        public async Task Handle(RegisterMemberCommand command,IMessageContext context)
+        public async Task<Guid> Handle(RegisterMemberCommand command)
         {
-            var member = new Member
-            {
-                Id = Guid.NewGuid(),
-                FullName = command.FullName,
-                Email = command.Email,
-                IsActive = true
-            };
-
-            _repository.AddMemberAsync(member);
-            await context.PublishAsync(new MemberRegisteredEvent(member.Id, member.FullName, member.Email));
+            Guid id = Guid.NewGuid();
+            MemberRegisteredEvent @event = Member.Register(id, command.FullName, command.Email);
+            _eventStore.StartStream<Member>(id, @event);
+            await _eventStore.SaveChangesAsync();
+            return id;
         }
     }
 }
