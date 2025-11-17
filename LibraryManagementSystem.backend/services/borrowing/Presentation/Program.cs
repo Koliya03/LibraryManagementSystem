@@ -3,12 +3,14 @@ using Application.Mapper;
 using Infranstructure.Persistence;
 using Infranstructure.Projections;
 using JasperFx;
+using JasperFx.Core;
 using JasperFx.Events.Projections;
 using Marten;
 using Messages.Borrowing;
 using Messages.Borrowing.Requests;
 using Npgsql;
 using Wolverine;
+using Wolverine.ErrorHandling;
 using Wolverine.Http;
 using Wolverine.Marten;
 using Wolverine.RabbitMQ;
@@ -27,9 +29,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "Catalog Service API",
+        Title = "borrowing Service API",
         Version = "v1",
-        Description = "API endpoints for managing catalog books"
+        Description = "API endpoints for managing borrowing books"
     });
 });
 
@@ -37,6 +39,8 @@ var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? 
 
 var rabbitMqHost = builder.Configuration["RabbitMq:Host"] ?? "amqp://guest:guest@localhost:5672";
 
+
+CreateDatabaseIfNotExists(connectionString);
 
 builder.Services.AddMarten(opts =>
 {
@@ -61,17 +65,22 @@ builder.Host.UseWolverine(opts =>
 
     //        exchange.BindTopic("catalog.*").ToQueue("borrowing.catalog");
     //    });
-    opts.PublishMessage<TestPing>()
-    .ToRabbitQueue("catalog-test");
 
-    opts.PublishMessage<GetMemberStatusRequest>()
-       .ToRabbitQueue("catalog-requests");
+    opts.PublishAllMessages().ToRabbitQueue("borrowing-catalog");
+    opts.ListenToRabbitQueue("catalog-borrowing");
+    //opts.PublishMessage<TestPing>()
+    //.ToRabbitQueue("catalog-test");
 
-    opts.PublishMessage<GetBookAvailabilityRequest>()
-        .ToRabbitQueue("catalog-requests");
-    
-    opts.PublishMessage<TestPingRequest>()
-    .ToRabbitQueue("catalog-requests");
+    //opts.PublishMessage<GetMemberStatusRequest>()
+    //   .ToRabbitQueue("catalog-requests");
+
+    //opts.PublishMessage<GetBookAvailabilityRequest>()
+    //    .ToRabbitQueue("catalog-requests");
+
+    //opts.PublishMessage<TestPingRequest>()
+    //.ToRabbitQueue("catalog-requests");
+
+    opts.Policies.OnException<TimeoutException>().ScheduleRetry(5.Seconds());
 });
 
 builder.Services.AddScoped<IEventStore, MartenEventStore>();
@@ -114,3 +123,28 @@ app.MapWolverineEndpoints();
 return await app.RunJasperFxCommands(args);
 
 
+static void CreateDatabaseIfNotExists(string connectionString)
+{
+    var builder = new NpgsqlConnectionStringBuilder(connectionString);
+    var databaseName = builder.Database;
+    builder.Database = "postgres";
+
+    using var connection = new NpgsqlConnection(builder.ConnectionString);
+    connection.Open();
+
+    using (var cmd = new NpgsqlCommand(
+        $"SELECT 1 FROM pg_database WHERE datname = '{databaseName}'", connection))
+    {
+        var exists = cmd.ExecuteScalar() != null;
+        if (!exists)
+        {
+            using var create = new NpgsqlCommand($"CREATE DATABASE \"{databaseName}\"", connection);
+            create.ExecuteNonQuery();
+            Console.WriteLine($"✅ Database '{databaseName}' created automatically.");
+        }
+        else
+        {
+            Console.WriteLine($"ℹ️ Database '{databaseName}' already exists.");
+        }
+    }
+}

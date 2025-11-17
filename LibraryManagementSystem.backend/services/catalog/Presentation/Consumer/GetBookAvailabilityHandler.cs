@@ -2,11 +2,13 @@
 using Application.Interfaces;
 using Domain.Books.Entities;
 using Messages.Borrowing.Requests;
+using Wolverine.Attributes;
 
 namespace Presentation.Consumer
 {
     public static class GetBookAvailabilityHandler
     {
+        [MessageTimeout(1)]
         public static async Task<AvailabilityDto> Handle(
             GetBookAvailabilityRequest message,
             IReadStore readStore)

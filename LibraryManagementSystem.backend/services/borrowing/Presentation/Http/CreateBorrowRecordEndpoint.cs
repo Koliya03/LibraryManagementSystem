@@ -13,32 +13,61 @@ namespace Presentation.Http
     public static class CreateBorrowRecordEndpoint
     {
         [WolverinePost("/api/borrowing/records")]
-        public static async Task<(IResult, BorrowRecordCreatedEvent, OutgoingMessages)> Post(
+        public static async Task<(IResult, Events, OutgoingMessages)> Post(
             BorrowRecordRequestDto request,
             [WriteAggregate(nameof(request.BorrowId), Required = false)] BorrowRecord? record,
             IMessageContext bus)
         {
+            var events = new Events();
+            var outgoing = new OutgoingMessages();
+
             if (request.MemberId == Guid.Empty)
-                throw new Exception("MemberId is required.");
+            {
+                return (
+                    Results.BadRequest("MemberId is required"),
+                    events,
+                    outgoing
+                );
+            }
 
             if (request.BookId == Guid.Empty)
-                throw new Exception("BookId is required.");
+            {
+                return (
+                    Results.BadRequest("BookId is required."),
+                    events,
+                    outgoing
+                );
+            }
+            
 
             var memberStatus = await bus.InvokeAsync<MemberStatusDto>(
                 new GetMemberStatusRequest(request.MemberId)
             );
 
             if (!memberStatus.IsActive)
-                throw new Exception("Member is not active.");
+            {
+                return (
+                    Results.BadRequest("Member is not activated"),
+                    events,
+                    null
+                );
+            }
 
             var bookAvailability = await bus.InvokeAsync<AvailabilityDto>(
                  new GetBookAvailabilityRequest(request.BookId)
             );
 
             if (!bookAvailability.IsAvailable)
-                throw new Exception("Book is not available.");
+            {
+                return (
+                  Results.BadRequest("books is not available"),
+                  events,
+                  null
+              );
+            }
+               
 
-            //var borrowId = Guid.NewGuid();
+            var borrowId = Guid.NewGuid();
             var borrowDate = DateTime.UtcNow;
             var dueDate = borrowDate.AddDays(14);
 
@@ -57,8 +86,7 @@ namespace Presentation.Http
                  borrowDate,
                  dueDate
             );
-            var outgoing = new OutgoingMessages
-            {
+            outgoing.Add(
                 new BorrowRecordCreatedMessage(
                     request.BorrowId,
                     request.MemberId,
@@ -66,12 +94,11 @@ namespace Presentation.Http
                     borrowDate,
                     dueDate
                 )
-            } ;
-
+            );
 
             return (
                 Results.Created($"/api/borrowing/records/{request.BorrowId}", new { request.BorrowId }),
-                evt,
+                events,
                 outgoing
             );
         }

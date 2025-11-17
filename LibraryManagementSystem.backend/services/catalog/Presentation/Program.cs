@@ -42,6 +42,8 @@ var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? 
 var rabbitMqHost = builder.Configuration["RabbitMq:Host"]?? "amqp://guest:guest@localhost:5672";
 
 
+CreateDatabaseIfNotExists(connectionString);
+
 builder.Services.AddMarten(opts =>
 {
     opts.Connection(connectionString);
@@ -64,15 +66,18 @@ builder.Host.UseWolverine(opts =>
     opts.UseRabbitMq(rabbitMqHost).AutoProvision();
     //opts.PublishAllMessages().ToRabbitTopics("library.topics");
 
-    // Console.WriteLine(opts.DescribeHandlerMatch(typeof(RegisterBookHandler)));
-    //opts.Discovery.IncludeAssembly(typeof(RegisterBookHandler).Assembly);
-    //opts.Discovery.IncludeAssembly(typeof(RegisterMemberHandler).Assembly);
+    //// Console.WriteLine(opts.DescribeHandlerMatch(typeof(RegisterBookHandler)));
+    ////opts.Discovery.IncludeAssembly(typeof(RegisterBookHandler).Assembly);
+    ////opts.Discovery.IncludeAssembly(typeof(RegisterMemberHandler).Assembly);
 
-    opts.ListenToRabbitQueue("catalog-test");
-    opts.ListenToRabbitQueue("catalog-requests");
+    //opts.ListenToRabbitQueue("catalog-test");
+    //opts.ListenToRabbitQueue("catalog-requests");
 
-    opts.Discovery.IncludeAssembly(typeof(TestPingHandler).Assembly);
-    opts.Discovery.IncludeAssembly(typeof(TestPingRequestHandler).Assembly);
+    //opts.Discovery.IncludeAssembly(typeof(TestPingHandler).Assembly);
+    //opts.Discovery.IncludeAssembly(typeof(TestPingRequestHandler).Assembly);
+
+    opts.PublishAllMessages().ToRabbitQueue("catalog-borrowing");
+    opts.ListenToRabbitQueue("borrowing-catalog");
 });
 
 builder.Services.AddScoped<IEventStore, MartenEventStore>();
@@ -105,3 +110,31 @@ app.MapWolverineEndpoints();
 
 //app.Run();
 return await app.RunJasperFxCommands(args);
+
+
+
+static void CreateDatabaseIfNotExists(string connectionString)
+{
+    var builder = new NpgsqlConnectionStringBuilder(connectionString);
+    var databaseName = builder.Database;
+    builder.Database = "postgres"; 
+
+    using var connection = new NpgsqlConnection(builder.ConnectionString);
+    connection.Open();
+
+    using (var cmd = new NpgsqlCommand(
+        $"SELECT 1 FROM pg_database WHERE datname = '{databaseName}'", connection))
+    {
+        var exists = cmd.ExecuteScalar() != null;
+        if (!exists)
+        {
+            using var create = new NpgsqlCommand($"CREATE DATABASE \"{databaseName}\"", connection);
+            create.ExecuteNonQuery();
+            Console.WriteLine($"✅ Database '{databaseName}' created automatically.");
+        }
+        else
+        {
+            Console.WriteLine($"ℹ️ Database '{databaseName}' already exists.");
+        }
+    }
+}

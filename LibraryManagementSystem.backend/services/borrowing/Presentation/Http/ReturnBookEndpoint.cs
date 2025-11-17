@@ -13,19 +13,21 @@ namespace Presentation.Http
         [WolverinePut("/api/borrowing/records/{borrowId:guid}/return")]
         public static (
             IResult,
-            BookReturnedEvent,
-            LateFeeIssuedEvent?,
+            Events,
             OutgoingMessages
         ) Put(
             Guid borrowId,
             [WriteAggregate(nameof(borrowId))] BorrowRecord record)
         {
             if (record.IsReturned)
-                throw new Exception("Book already returned.");
-
-            if (record.IsLost)
-                throw new Exception("Book already reported as lost.");
-
+            {
+                return (
+                     Results.BadRequest(new { Message = "Book already returned " }),
+                     new Events(),
+                     new OutgoingMessages()
+                 );
+            }
+                
             var now = DateTime.UtcNow;
             decimal lateFee = 0;
 
@@ -38,7 +40,6 @@ namespace Presentation.Http
                 borrowId, record.MemberId, record.BookId, now, lateFee
             );
 
-            LateFeeIssuedEvent? feeEvent = null;
 
             var outgoing = new OutgoingMessages();
 
@@ -46,21 +47,34 @@ namespace Presentation.Http
                 borrowId, record.MemberId, record.BookId, now, lateFee
             ));
 
+            var events = new Events(); 
+            events.Add(returnedEvent);
+
+            if (record.IsLost)
+            {
+                var foundLostBookEvent = new BookMarkedFoundEvent(borrowId, record.MemberId, record.BookId, now);
+                events.Add(returnedEvent);
+                outgoing.Add(new BookFoundMessage(
+                 borrowId, record.MemberId, record.BookId, now
+               ));
+            }
+
             if (lateFee > 0)
             {
-                feeEvent = new LateFeeIssuedEvent(borrowId, lateFee);
+                var feeEvent = new LateFeeIssuedEvent(borrowId, lateFee);
 
                 outgoing.Add(new LateFeeIssuedMessage(
                     borrowId, lateFee
                 ));
+                events.Add(feeEvent);
             }
-
             return (
-                Results.Ok(new { Message = "Book returned successfully.", LateFee = lateFee }),
-                returnedEvent,
-                feeEvent,
-                outgoing
+              Results.Ok(new { Message = "Book returned successfully.", LateFee = lateFee }),
+              events,
+              outgoing
             );
+
+
         }
     }
 }

@@ -2,11 +2,13 @@
 using Application.Interfaces;
 using Domain.Members.Entities;
 using Messages.Borrowing.Requests;
+using Wolverine.Attributes;
 
 namespace Presentation.Consumer
 {
     public static class GetMemberStatusHandler
     {
+        [MessageTimeout(1)]
         public static async Task<MemberStatusDto> Handle(
             GetMemberStatusRequest message,
             IReadStore readStore)

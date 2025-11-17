@@ -9,35 +9,53 @@ namespace Presentation.Http
     public static class ReportLostBookEndpoint
     {
         [WolverinePut("/api/borrowing/records/{borrowId:guid}/lost")]
-        public static (IResult, BookMarkedLostEvent, BookLostMessage) Put(
+        public static (IResult, Events, BookLostMessage) Put(
             Guid borrowId,
             [WriteAggregate(nameof(borrowId))] BorrowRecord record)
         {
             if (record.IsReturned)
-                throw new Exception("Book already returned.");
+            {
+                return (
+                 Results.BadRequest("Book already returned"),
+                 null,
+                 null
+             );
+            }
+
 
             if (record.IsLost)
-                throw new Exception("Book already marked as lost.");
+            {
+                return (
+                 Results.BadRequest("Book already returned"),
+                 null,
+                 null
+             );
+            }
 
-            var evt = new BookMarkedLostEvent(
-                borrowId,
-                record.MemberId,
-                record.BookId,
-                DateTime.UtcNow
-            );
+                var events = new Events();
 
-            var message = new BookLostMessage(
-                borrowId,
-                record.MemberId,
-                record.BookId,
-                DateTime.UtcNow
-            );
+                events.Add(
+                    new BookMarkedLostEvent(
+                    borrowId,
+                    record.MemberId,
+                    record.BookId,
+                    DateTime.UtcNow
+                    )
+                );
 
-            return (
-                Results.Ok("Book marked as lost."),
-                evt,
-                message
-            );
+                var message = new BookLostMessage(
+                    borrowId,
+                    record.MemberId,
+                    record.BookId,
+                    DateTime.UtcNow
+                );
+
+                return (
+                    Results.Ok("Book marked as lost."),
+                    events,
+                    message
+                );
         }
     }
 }
+

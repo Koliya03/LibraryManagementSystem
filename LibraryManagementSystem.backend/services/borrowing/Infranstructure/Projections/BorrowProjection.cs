@@ -38,5 +38,9 @@ namespace Infranstructure.Projections
         {
             view.LateFee = e.FeeAmount;
         }
+        public void Apply(BookMarkedFoundEvent e, BorrowRecord view)
+        {
+            view.IsLost = false;
+        }
     }
 }

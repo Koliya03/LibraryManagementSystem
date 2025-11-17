@@ -55,5 +55,16 @@ namespace Infranstructure.Projections
         {
             view.AvailableQuantity = view.AvailableQuantity + 1;
         }
+        public void Apply(BookLostEvent e, Book view)
+        {
+            view.TotalQuantity = view.TotalQuantity - 1;
+
+        }
+        public void Apply(BookFoundEvent e, Book view)
+        {
+            view.TotalQuantity = view.TotalQuantity + 1;
+
+        }
+        
     }
 }
