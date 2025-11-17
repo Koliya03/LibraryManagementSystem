@@ -42,8 +42,6 @@ var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? 
 var rabbitMqHost = builder.Configuration["RabbitMq:Host"]?? "amqp://guest:guest@localhost:5672";
 
 
-CreateDatabaseIfNotExists(connectionString);
-
 builder.Services.AddMarten(opts =>
 {
     opts.Connection(connectionString);
@@ -101,11 +99,9 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 
+
 app.MapWolverineEndpoints();
 
 
 //app.Run();
 return await app.RunJasperFxCommands(args);
-
-
-

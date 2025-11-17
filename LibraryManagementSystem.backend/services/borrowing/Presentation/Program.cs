@@ -38,8 +38,6 @@ var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? 
 var rabbitMqHost = builder.Configuration["RabbitMq:Host"] ?? "amqp://guest:guest@localhost:5672";
 
 
-CreateDatabaseIfNotExists(connectionString);
-
 builder.Services.AddMarten(opts =>
 {
     opts.Connection(connectionString);
