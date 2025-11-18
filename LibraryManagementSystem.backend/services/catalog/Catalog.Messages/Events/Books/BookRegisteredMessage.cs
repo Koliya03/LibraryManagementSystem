@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Wolverine.Attributes;
 
 
-namespace Messages.Borrowing.Books
+namespace Messages.Catalog.Events.Books
 {
     [Topic("catalog.book.registered")]
     public record BookRegisteredMessage(

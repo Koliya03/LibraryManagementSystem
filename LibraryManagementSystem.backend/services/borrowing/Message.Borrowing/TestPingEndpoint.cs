@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Wolverine.Attributes;
 
 namespace Messages.Borrowing
 {
+    [Topic("borrowing.record.test")]
     public record TestPingEndpoint(string Reply);
 }

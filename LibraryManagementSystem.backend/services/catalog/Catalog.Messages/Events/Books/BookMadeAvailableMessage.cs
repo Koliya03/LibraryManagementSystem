@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Wolverine.Attributes;
 
-namespace Messages.Catalog.Books
+namespace Messages.Catalog.Events.Books
 {
     [Topic("catalog.book.madeAvailable")]
     public record BookMadeAvailableMessage(Guid BookId);

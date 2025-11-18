@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Wolverine.Attributes;
 
-namespace Messages.Borrowing.Members
+namespace Messages.Catalog.Events.Members
 {
     [Topic("catalog.member.activated")]
     public record MemberActivatedMessage(Guid MemberId);

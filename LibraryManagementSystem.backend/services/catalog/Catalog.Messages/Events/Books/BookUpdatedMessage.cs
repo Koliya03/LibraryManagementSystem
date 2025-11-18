@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Wolverine.Attributes;
 
-namespace Messages.Borrowing.Books
+namespace Messages.Catalog.Events.Books
 {
     [Topic("catalog.book.updated")]
     public record BookUpdatedMessage(

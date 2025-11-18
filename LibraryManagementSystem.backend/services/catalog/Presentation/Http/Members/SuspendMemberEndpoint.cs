@@ -1,7 +1,7 @@
 ﻿using Application.Interfaces;
 using Domain.Member.Events;
 using Domain.Members.Entities;
-using Messages.Borrowing.Members;
+using Messages.Catalog.Events.Members;
 using Wolverine;
 using Wolverine.Http;
 using Wolverine.Marten;

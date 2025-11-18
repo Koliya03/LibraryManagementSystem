@@ -2,14 +2,15 @@
 using Application.Interfaces;
 using Domain.Members.Entities;
 using Messages.Borrowing.Requests;
+using Messages.Catalog.Responses;
 using Wolverine.Attributes;
 
 namespace Presentation.Consumer
 {
     public static class GetMemberStatusHandler
     {
-        [MessageTimeout(1)]
-        public static async Task<MemberStatusDto> Handle(
+        [MessageTimeout(2)]
+        public static async Task<MemberStatusResponse> Handle(
             GetMemberStatusRequest message,
             IReadStore readStore)
         {
@@ -17,18 +18,18 @@ namespace Presentation.Consumer
 
             if (member == null)
             {
-                return new MemberStatusDto
-                {
-                    MemberId = message.MemberId,
-                    IsActive = false
-                };
+                return new MemberStatusResponse
+                (
+                     message.MemberId,
+                     false
+                );
             }
 
-            return new MemberStatusDto
-            {
-                MemberId = member.Id,
-                IsActive = member.IsActive
-            };
+            return new MemberStatusResponse
+            (
+                member.Id,
+                member.IsActive
+            );
         }
     }
 }

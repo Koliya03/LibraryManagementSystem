@@ -1,7 +1,7 @@
 ﻿using Application.Interfaces;
 using Domain.Members.Entities;
 using Domain.Members.Events;
-using Messages.Borrowing.Members;
+using Messages.Catalog.Events.Members;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Wolverine;
 using Wolverine.Http;

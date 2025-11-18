@@ -7,6 +7,6 @@ using Wolverine.Attributes;
 
 namespace Messages.Borrowing.Requests
 {
-    [Topic("borrowing.request.bookavailability")]
+    [Topic("borrowing.record.requests")]
     public record GetBookAvailabilityRequest(Guid BookId);
 }

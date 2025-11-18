@@ -5,8 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Wolverine.Attributes;
 
-namespace Messages.Borrowing.Books
+namespace Messages.Catalog.Events.Members
 {
-    [Topic("catalog.book.retired")]
-    public record BookRetiredMessage(Guid BookId);
+    [Topic("catalog.member.suspended")]
+    public record MemberSuspendedMessage(Guid MemberId);
 }

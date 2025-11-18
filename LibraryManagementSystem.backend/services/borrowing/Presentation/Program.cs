@@ -55,30 +55,19 @@ builder.Services.AddMarten(opts =>
 
 builder.Host.UseWolverine(opts =>
 {
-    opts.UseRabbitMq(rabbitMqHost).AutoProvision();
+    opts.UseRabbitMq(rabbitMqHost).AutoProvision().UseConventionalRouting();
+
+    //opts.PublishAllMessages().ToRabbitTopics("library.topics");
+
+    //opts.ListenToRabbitQueue("borrowing.catalog");
 
     //opts.PublishAllMessages().ToRabbitTopics("library.topics", exchange =>
-    //    {
-    //        exchange.BindTopic("catalog.book.*").ToQueue("borrowing.catalog");
+    //{
+    //    exchange.BindTopic("catalog.*").ToQueue("borrowing.catalog");
+    //});
 
-    //        exchange.BindTopic("catalog.member.*").ToQueue("borrowing.catalog");
-
-    //        exchange.BindTopic("catalog.*").ToQueue("borrowing.catalog");
-    //    });
-
-    opts.PublishAllMessages().ToRabbitQueue("borrowing-catalog");
-    opts.ListenToRabbitQueue("catalog-borrowing");
-    //opts.PublishMessage<TestPing>()
-    //.ToRabbitQueue("catalog-test");
-
-    //opts.PublishMessage<GetMemberStatusRequest>()
-    //   .ToRabbitQueue("catalog-requests");
-
-    //opts.PublishMessage<GetBookAvailabilityRequest>()
-    //    .ToRabbitQueue("catalog-requests");
-
-    //opts.PublishMessage<TestPingRequest>()
-    //.ToRabbitQueue("catalog-requests");
+    //opts.PublishAllMessages().ToRabbitQueue("borrowing-catalog");
+    //opts.ListenToRabbitQueue("catalog-borrowing");
 
     opts.Policies.OnException<TimeoutException>().ScheduleRetry(5.Seconds());
 });

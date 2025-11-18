@@ -53,7 +53,7 @@ namespace Presentation.Http
             if (record.IsLost)
             {
                 var foundLostBookEvent = new BookMarkedFoundEvent(borrowId, record.MemberId, record.BookId, now);
-                events.Add(returnedEvent);
+                events.Add(foundLostBookEvent);
                 outgoing.Add(new BookFoundMessage(
                  borrowId, record.MemberId, record.BookId, now
                ));

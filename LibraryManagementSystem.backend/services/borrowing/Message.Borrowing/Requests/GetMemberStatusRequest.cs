@@ -7,6 +7,6 @@ using Wolverine.Attributes;
 
 namespace Messages.Borrowing.Requests
 {
-    [Topic("borrowing.request.memberStatus")]
+    [Topic("borrowing.record.requests")]
     public record GetMemberStatusRequest(Guid MemberId);
 }

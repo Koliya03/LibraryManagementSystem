@@ -4,6 +4,7 @@ using Domain.Events;
 using Messages;
 using Messages.Borrowing.Events;
 using Messages.Borrowing.Requests;
+using Messages.Catalog.Responses;
 using Wolverine;
 using Wolverine.Http;
 using Wolverine.Marten;
@@ -20,6 +21,15 @@ namespace Presentation.Http
         {
             var events = new Events();
             var outgoing = new OutgoingMessages();
+
+            if (record != null)
+            {
+                return (
+                    Results.BadRequest("Borrow record already exists."),
+                    events,
+                    outgoing
+                );
+            }
 
             if (request.MemberId == Guid.Empty)
             {
@@ -40,7 +50,7 @@ namespace Presentation.Http
             }
             
 
-            var memberStatus = await bus.InvokeAsync<MemberStatusDto>(
+            var memberStatus = await bus.InvokeAsync<MemberStatusResponse>(
                 new GetMemberStatusRequest(request.MemberId)
             );
 
@@ -53,7 +63,7 @@ namespace Presentation.Http
                 );
             }
 
-            var bookAvailability = await bus.InvokeAsync<AvailabilityDto>(
+            var bookAvailability = await bus.InvokeAsync<BookAvailabilityResponse>(
                  new GetBookAvailabilityRequest(request.BookId)
             );
 
@@ -71,7 +81,7 @@ namespace Presentation.Http
             var borrowDate = DateTime.UtcNow;
             var dueDate = borrowDate.AddDays(14);
 
-            var evt = new BorrowRecordCreatedEvent(
+            var borrowingEvent = new BorrowRecordCreatedEvent(
                 request.BorrowId,
                 request.MemberId,
                 request.BookId,
@@ -86,14 +96,9 @@ namespace Presentation.Http
                  borrowDate,
                  dueDate
             );
+            events.Add(borrowingEvent);
             outgoing.Add(
-                new BorrowRecordCreatedMessage(
-                    request.BorrowId,
-                    request.MemberId,
-                    request.BookId,
-                    borrowDate,
-                    dueDate
-                )
+               message
             );
 
             return (

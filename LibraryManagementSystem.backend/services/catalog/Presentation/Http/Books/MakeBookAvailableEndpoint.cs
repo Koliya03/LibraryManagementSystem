@@ -1,7 +1,7 @@
 ﻿using Application.Interfaces;
 using Domain.Books.Entities;
 using Domain.Books.Events;
-using Messages.Catalog.Books;
+using Messages.Catalog.Events.Books;
 using System.Net;
 using Wolverine;
 using Wolverine.Http;

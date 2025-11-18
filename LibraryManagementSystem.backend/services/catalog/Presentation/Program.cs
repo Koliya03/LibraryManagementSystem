@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Mapper;
+using ImTools;
 using Infranstructure.Persistence;
 using Infranstructure.Projections;
 using JasperFx;
@@ -53,31 +54,34 @@ builder.Services.AddMarten(opts =>
     opts.Projections.Add<BookProjection>(ProjectionLifecycle.Inline);
     opts.Projections.Add<MemberProjection>(ProjectionLifecycle.Inline);
 })
+
 .IntegrateWithWolverine();
+builder.Services.AddMartenStore<IApplicationStore>(opts =>
+{
+    opts.Connection(connectionString);
+})
+.ApplyAllDatabaseChangesOnStartup();
 
 
 
 builder.Host.UseWolverine(opts =>
 {
+    opts.UseRabbitMq(rabbitMqHost).AutoProvision().UseConventionalRouting();
 
-    opts.Discovery.IncludeAssembly(typeof(GetMemberStatusHandler).Assembly);
-    opts.Discovery.IncludeAssembly(typeof(GetBookAvailabilityHandler).Assembly);
-
-    opts.UseRabbitMq(rabbitMqHost).AutoProvision();
     //opts.PublishAllMessages().ToRabbitTopics("library.topics");
 
-    //// Console.WriteLine(opts.DescribeHandlerMatch(typeof(RegisterBookHandler)));
-    ////opts.Discovery.IncludeAssembly(typeof(RegisterBookHandler).Assembly);
-    ////opts.Discovery.IncludeAssembly(typeof(RegisterMemberHandler).Assembly);
+    //opts.ListenToRabbitQueue("catalog.borrowing");
 
-    //opts.ListenToRabbitQueue("catalog-test");
-    //opts.ListenToRabbitQueue("catalog-requests");
+    //opts.PublishAllMessages().ToRabbitTopics("library.topics", exchange =>
+    //{
+    //    exchange.BindTopic("borrowing.record.*").ToQueue("catalog.borrowing");
+    //});
 
-    //opts.Discovery.IncludeAssembly(typeof(TestPingHandler).Assembly);
-    //opts.Discovery.IncludeAssembly(typeof(TestPingRequestHandler).Assembly);
+    //opts.PublishAllMessages().ToRabbitQueue("catalog-borrowing");
+    //opts.ListenToRabbitQueue("borrowing-catalog");
 
-    opts.PublishAllMessages().ToRabbitQueue("catalog-borrowing");
-    opts.ListenToRabbitQueue("borrowing-catalog");
+    opts.Discovery.IncludeAssembly(typeof(IApplicationStore).Assembly);
+    opts.Discovery.IncludeAssembly(typeof(Messages.Catalog.Events.Books.BookMadeAvailableMessage).Assembly);
 });
 
 builder.Services.AddScoped<IEventStore, MartenEventStore>();

@@ -1,15 +1,16 @@
-﻿using Application.DTO;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Domain.Books.Entities;
 using Messages.Borrowing.Requests;
+using Messages.Catalog.Responses;
+using System.Net;
 using Wolverine.Attributes;
 
 namespace Presentation.Consumer
 {
     public static class GetBookAvailabilityHandler
     {
-        [MessageTimeout(1)]
-        public static async Task<AvailabilityDto> Handle(
+        [MessageTimeout(2)]
+        public static async Task<BookAvailabilityResponse> Handle(
             GetBookAvailabilityRequest message,
             IReadStore readStore)
         {
@@ -17,20 +18,22 @@ namespace Presentation.Consumer
 
             if (book == null)
             {
-                return new AvailabilityDto
-                {
-                    BookId = message.BookId,
-                    AvailableQuantity = 0,
-                    IsAvailable = false
-                };
+                 return new BookAvailabilityResponse(
+                    message.BookId,
+                    0,
+                    false
+                 );
             }
 
-            return new AvailabilityDto
-            {
-                BookId = book.Id,
-                AvailableQuantity = book.AvailableQuantity,
-                IsAvailable = book.AvailableQuantity > 0 && !book.IsRetired
-            };
+            return new BookAvailabilityResponse
+            (
+                book.Id,
+                book.AvailableQuantity,
+                book.AvailableQuantity > 0 && !book.IsRetired
+
+            );
+                
+            
         }
     }
 }

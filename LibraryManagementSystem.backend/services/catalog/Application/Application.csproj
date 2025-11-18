@@ -10,14 +10,16 @@
     <PackageReference Include="AutoMapper" Version="15.1.0" />
     <PackageReference Include="Marten" Version="8.14.0" />
     <PackageReference Include="WolverineFx" Version="5.1.0" />
+    <PackageReference Include="WolverineFx.Http" Version="5.1.0" />
+    <PackageReference Include="WolverineFx.Marten" Version="5.1.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Handlers\Books\" />
     <Folder Include="Handlers\Members\" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\borrowing\Message.Borrowing\Messages.Borrowing.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 
