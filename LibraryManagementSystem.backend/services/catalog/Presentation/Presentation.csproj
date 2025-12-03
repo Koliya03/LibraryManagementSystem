@@ -22,9 +22,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\borrowing\Message.Borrowing\Messages.Borrowing.csproj" />
+    <ProjectReference Include="..\..\report\Messages.Report\Messages.Report.csproj" />
+    <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Catalog.Messages\Messages.Catalog.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
     <ProjectReference Include="..\Infranstructure\Infranstructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>

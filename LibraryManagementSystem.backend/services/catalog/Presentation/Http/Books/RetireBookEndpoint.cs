@@ -11,16 +11,22 @@ namespace Presentation.Http.Books
     public static class RetireBookEndpoint
     {
         [WolverinePost("/api/catalog/books/{bookId:guid}/retire")]
-        public static (IResult, BookRetiredEvent, BookRetiredMessage) Post(
+        public static (IResult, Events, OutgoingMessages) Post(
         [WriteAggregate] Book book)
         {
+            var events = new Events();
+            var outgoing = new OutgoingMessages();
+
             var evt = new BookRetiredEvent(book.Id);
+            events.Add(evt);
+
             var message = new BookRetiredMessage(book.Id);
+            outgoing.Add(message);
 
             return (
-                Results.Ok("Book retired successfully."),
-                evt,
-                message
+                Results.Ok(new { Message = "Book retired successfully." }),
+                events,
+                outgoing
             );
         }
     }

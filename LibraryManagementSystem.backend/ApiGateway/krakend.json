@@ -1,0 +1,296 @@
+{
+  "version": 3,
+  "name": "Library Gateway",
+  "port": 8080,
+  "timeout": "6000ms",
+
+  "extra_config": {
+    "router": {
+      "auto_options": true
+    },
+    "security/cors": {
+      "allow_origins": ["http://localhost:5173", "http://localhost:5174", "*"],
+      "allow_methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      "allow_headers": ["*"],
+      "expose_headers": ["Content-Length", "Content-Type"],
+      "allow_credentials": false,
+      "max_age": "12h",
+      "debug": true
+    }
+  },
+
+  "endpoints": [
+    {
+      "endpoint": "/catalog/books",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/books"
+        }
+      ]
+    },
+    {
+      "endpoint": "/catalog/books/{bookId}/availability",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/books/{bookId}/availability"
+        }
+      ]
+    },
+    {
+      "endpoint": "/catalog/books/{bookId}",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/books/{bookId}"
+        }
+      ]
+    },
+    {
+      "endpoint": "/catalog/books",
+      "method": "POST",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/books"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/catalog/books/{bookId}/make-available",
+      "method": "POST",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/books/{bookId}/make-available"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/catalog/books/{bookId}/retire",
+      "method": "POST",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/books/{bookId}/retire"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/catalog/books/{bookId}",
+      "method": "PUT",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/books/{bookId}"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/catalog/members",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/members"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/catalog/members/{memberId}",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/members/{memberId}"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/catalog/members/{memberId}/status",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/members/{memberId}/status"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/catalog/members/register",
+      "method": "POST",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/members/register"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/catalog/members/{memberId}/activate",
+      "method": "PUT",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/members/{memberId}/activate"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/catalog/members/{memberId}/suspend",
+      "method": "PUT",
+      "backend": [
+        {
+          "host": ["http://catalog-service:8080"],
+          "url_pattern": "/api/catalog/members/{memberId}/suspend"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/borrowing/records",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://borrowing-service:8080"],
+          "url_pattern": "/api/borrowing/records"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/borrowing/records/{borrowId}",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://borrowing-service:8080"],
+          "url_pattern": "/api/borrowing/records/{borrowId}"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/borrowing/members/{memberId}/active",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://borrowing-service:8080"],
+          "url_pattern": "/api/borrowing/members/{memberId}/active"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/borrowing/members/{memberId}/history",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://borrowing-service:8080"],
+          "url_pattern": "/api/borrowing/members/{memberId}/history"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/borrowing/test/ping",
+      "method": "POST",
+      "backend": [
+        {
+          "host": ["http://borrowing-service:8080"],
+          "url_pattern": "/api/borrowing/test/ping"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/borrowing/records",
+      "method": "POST",
+      "backend": [
+        {
+          "host": ["http://borrowing-service:8080"],
+          "url_pattern": "/api/borrowing/records"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/borrowing/records/{borrowId}/lost",
+      "method": "PUT",
+      "backend": [
+        {
+          "host": ["http://borrowing-service:8080"],
+          "url_pattern": "/api/borrowing/records/{borrowId}/lost"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/borrowing/records/{borrowId}/return",
+      "method": "PUT",
+      "backend": [
+        {
+          "host": ["http://borrowing-service:8080"],
+          "url_pattern": "/api/borrowing/records/{borrowId}/return"
+        }
+      ]
+    },
+
+    {
+      "endpoint": "/search/books",
+      "method": "GET",
+      "input_query_strings": ["search"],
+      "backend": [
+        {
+          "host": ["http://search-service:8080"],
+          "url_pattern": "/api/search/books"
+        }
+      ]
+    },
+    {
+      "endpoint": "/search/members",
+      "method": "GET",
+      "input_query_strings": ["search"],
+      "backend": [
+        {
+          "host": ["http://search-service:8080"],
+          "url_pattern": "/api/search/members"
+        }
+      ]
+    },
+    {
+      "endpoint": "/reporting/members/{memberId}/history",
+      "method": "GET",
+      "backend": [
+        {
+          "host": ["http://report-service:8080"],
+          "url_pattern": "/api/reporting/members/{memberId}/history"
+        }
+      ]
+    },
+    {
+      "endpoint": "/reporting/books/top",
+      "method": "GET",
+      "input_query_strings": ["count"],
+      "backend": [
+        {
+          "host": ["http://report-service:8080"],
+          "url_pattern": "/api/reporting/books/top"
+        }
+      ]
+    }
+
+  ]
+}

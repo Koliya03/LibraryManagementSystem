@@ -1,0 +1,17 @@
+services:
+  krakend-gateway:
+    container_name: krakend-gateway
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./krakend.json:/etc/krakend/krakend.json:ro
+    networks:
+      - gateway-net
+    restart: always
+
+networks:
+  gateway-net:
+    driver: bridge

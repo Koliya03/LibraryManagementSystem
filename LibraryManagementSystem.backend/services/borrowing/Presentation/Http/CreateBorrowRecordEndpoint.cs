@@ -25,7 +25,7 @@ namespace Presentation.Http
             if (record != null)
             {
                 return (
-                    Results.BadRequest("Borrow record already exists."),
+                    Results.BadRequest(new { Message = "Borrow record already exists." }),
                     events,
                     outgoing
                 );
@@ -34,7 +34,7 @@ namespace Presentation.Http
             if (request.MemberId == Guid.Empty)
             {
                 return (
-                    Results.BadRequest("MemberId is required"),
+                    Results.BadRequest(new { Message = "MemberId is required" }),
                     events,
                     outgoing
                 );
@@ -43,7 +43,7 @@ namespace Presentation.Http
             if (request.BookId == Guid.Empty)
             {
                 return (
-                    Results.BadRequest("BookId is required."),
+                    Results.BadRequest(new { Message = "BookId is required." }),
                     events,
                     outgoing
                 );
@@ -57,7 +57,7 @@ namespace Presentation.Http
             if (!memberStatus.IsActive)
             {
                 return (
-                    Results.BadRequest("Member is not activated"),
+                    Results.BadRequest(new { Message = "Member is not activated" }),
                     events,
                     null
                 );
@@ -70,7 +70,7 @@ namespace Presentation.Http
             if (!bookAvailability.IsAvailable)
             {
                 return (
-                  Results.BadRequest("books is not available"),
+                  Results.BadRequest(new { Message = "books is not available" }),
                   events,
                   null
               );

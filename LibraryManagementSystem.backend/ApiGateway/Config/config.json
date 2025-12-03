@@ -1,0 +1,43 @@
+{
+  "version": 3,
+  "name": "library-gateway",
+  "port": 8080,
+  "extra_config": {
+    "telemetry/logging": {
+      "level": "DEBUG"
+    }
+  },
+
+  "endpoints": [
+    {
+      "endpoint": "/api/catalog",
+      "method": ["GET", "POST", "PUT", "DELETE"],
+      "backend": [
+        {
+          "host": ["http://host.docker.internal:5002"],
+          "url_pattern": "/api/catalog"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/borrow",
+      "method": ["GET", "POST", "PUT", "DELETE"],
+      "backend": [
+        {
+          "host": ["http://host.docker.internal:5003"],
+          "url_pattern": "/api/borrowing"
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/search",
+      "method": ["GET"],
+      "backend": [
+        {
+          "host": ["http://host.docker.internal:5004"],
+          "url_pattern": "/api/search"
+        }
+      ]
+    }
+  ]
+}

@@ -16,7 +16,7 @@ namespace Presentation.Http
             if (record.IsReturned)
             {
                 return (
-                 Results.BadRequest("Book already returned"),
+                 Results.BadRequest(new { Message = "Book already returned" }),
                  null,
                  null
              );
@@ -26,7 +26,7 @@ namespace Presentation.Http
             if (record.IsLost)
             {
                 return (
-                 Results.BadRequest("Book already returned"),
+                 Results.BadRequest(new { Message = "Book already returned" }),
                  null,
                  null
              );
@@ -51,7 +51,7 @@ namespace Presentation.Http
                 );
 
                 return (
-                    Results.Ok("Book marked as lost."),
+                    Results.Ok(new { Message = "Book marked as lost." }),
                     events,
                     message
                 );

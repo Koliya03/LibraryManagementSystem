@@ -4,6 +4,7 @@ using AutoMapper;
 using Domain.Entities;
 using ImTools;
 using Messages.Borrowing;
+using Messages.Borrowing.Response;
 using Wolverine;
 using Wolverine.Http;
 
@@ -18,10 +19,10 @@ namespace Presentation.Http
         {
             var models = await readStore.ListAsync<BorrowRecord>();
             if (models.Count == 0)
-                return Results.NotFound("No borrow records found.");
+                return Results.BadRequest(new { Message = "No borrow records found." });
 
             var list = mapper.Map<List<BorrowRecordResponseDto>>(models);
-            return Results.Ok(list);
+            return Results.Ok(new { list });
         }
 
         [WolverineGet("/api/borrowing/records/{borrowId:guid}")]
@@ -32,10 +33,10 @@ namespace Presentation.Http
         {
             var model = await readStore.LoadAsync<BorrowRecord>(borrowId);
             if (model == null)
-                return Results.NotFound($"Borrow record {borrowId} not found.");
+                return Results.BadRequest(new { Message = $"Borrow record {borrowId} not found." });
 
             var dto = mapper.Map<BorrowRecordResponseDto>(model);
-            return Results.Ok(dto);
+            return Results.Ok(new { dto });
         }
 
         [WolverineGet("/api/borrowing/members/{memberId:guid}/active")]
@@ -51,10 +52,10 @@ namespace Presentation.Http
                 .ToList();
 
             if (active.Count == 0)
-                return Results.NotFound("No active borrow records found for this member.");
+                return Results.BadRequest(new { Message = "No active borrow records found for this member." });
 
             var list = mapper.Map<List<BorrowRecordResponseDto>>(active);
-            return Results.Ok(list);
+            return Results.Ok(new { list });
         }
 
         [WolverineGet("/api/borrowing/members/{memberId:guid}/history")]
@@ -71,7 +72,7 @@ namespace Presentation.Http
                 .ToList();
 
             var list = mapper.Map<List<BorrowRecordResponseDto>>(history);
-            return Results.Ok(list);
+            return Results.Ok(new { list });
         }
 
         [WolverinePost("/api/borrowing/test/ping")]
@@ -80,7 +81,7 @@ namespace Presentation.Http
             IMessageBus bus)
         {
             await bus.PublishAsync(new TestPing(text));
-            return Results.Ok($"Sent test ping: {text}");
+            return Results.Ok(new { Message = $"Sent test ping: {text}" });
         }
     }
 }

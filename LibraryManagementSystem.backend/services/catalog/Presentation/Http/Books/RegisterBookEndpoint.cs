@@ -1,4 +1,4 @@
-﻿using Application.Commands.Books;
+﻿using Application.DTO;
 using Application.Interfaces;
 using Domain.Books.Entities;
 using Domain.Books.Events;
@@ -13,42 +13,58 @@ namespace Presentation.Http.Books
 {
     public static class RegisterBookEndpoint
     {
-        [WolverinePost("/api/catalog/books")]
-      public static (IResult, BookRegisteredEvent, BookRegisteredMessage) Post(RegisterBookCommand command,[WriteAggregate(Required = false)] Book book)
+      [WolverinePost("/api/catalog/books")]
+      public static (IResult, Events, OutgoingMessages) Post(RegisterBookDto registerBook,[WriteAggregate(Required = false)] Book book)
         {
-            if (string.IsNullOrWhiteSpace(command.Title))
-                throw new Exception("Title cannot be empty.");
-            if (string.IsNullOrWhiteSpace(command.Author))
-                throw new Exception("Author cannot be empty.");
-            if (string.IsNullOrWhiteSpace(command.ISBN))
-                throw new Exception("ISBN cannot be empty.");
-            if (command.TotalQuantity <= 0)
-                throw new Exception("Quantity must be greater than zero.");
-            var bookId = Guid.NewGuid();
+            var events = new Events();
+            var outgoing = new OutgoingMessages();
+
+            if (book != null)
+            {
+                return (
+                    Results.BadRequest(new { Message = $"Book with id {registerBook.BookId} already exists." }),
+                    events,
+                    outgoing
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(registerBook.Title))
+                return (Results.BadRequest(new { Message = "Title cannot be empty." }), events, outgoing);
+
+            if (string.IsNullOrWhiteSpace(registerBook.Author))
+                return (Results.BadRequest(new { Message = "Author cannot be empty." }), events, outgoing);
+
+            if (string.IsNullOrWhiteSpace(registerBook.ISBN))
+                return (Results.BadRequest(new { Message = "ISBN cannot be empty." }), events, outgoing);
+
+            if (registerBook.TotalQuantity <= 0)
+                return (Results.BadRequest(new { Message = "Quantity must be greater than zero." }), events, outgoing);
 
             var @event = new BookRegisteredEvent(
-                command.BookId,
-                command.Title,
-                command.Author,
-                command.ISBN,
-                command.TotalQuantity
+                registerBook.BookId,
+                registerBook.Title,
+                registerBook.Author,
+                registerBook.ISBN,
+                registerBook.TotalQuantity
             );
+            events.Add(@event);
 
             var message = new BookRegisteredMessage(
-                command.BookId,
-                command.Title,
-                command.Author,
-                command.ISBN,
-                command.TotalQuantity,
-                command.TotalQuantity,
+                registerBook.BookId,
+                registerBook.Title,
+                registerBook.Author,
+                registerBook.ISBN,
+                registerBook.TotalQuantity,
+                registerBook.TotalQuantity,
                 false
             );
+            outgoing.Add(message);
+
 
             return (
-             Results.Created($"/api/catalog/books/{command.BookId}", new { command.BookId }),
-             @event,
-             message);
-
-        }
+             Results.Created($"/api/catalog/books/{registerBook.BookId}", new { registerBook.BookId }),
+             events,
+             outgoing);
+      }
     }
 }

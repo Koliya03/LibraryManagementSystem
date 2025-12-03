@@ -1,44 +1,163 @@
-version: "3.9"
-
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: always
+    networks:
+      - library-net
+
   postgres:
     image: postgres:16
-    container_name: catalog_postgres
+    container_name: postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: catalogdb
     ports:
       - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d catalogdb"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 20
+    restart: always
+    networks:
+      - library-net
 
-  pgadmin:
-    image: dpage/pgadmin4:8.4
-    container_name: catalog_pgadmin
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.1
+    container_name: elasticsearch
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@local.com
-      PGADMIN_DEFAULT_PASSWORD: 1234
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
     ports:
-      - "5050:80"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    restart: always
+    networks:
+      - library-net
 
-  catalogservice:
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.2.1
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+    depends_on:
+      elasticsearch:
+        condition: service_started
+    restart: always
+    networks:
+      - library-net
+
+  borrowing-service:
+    container_name: borrowing-service
     build:
       context: .
-      dockerfile: services/catalogService/Presentation/Dockerfile
-    container_name: catalog_service
+      dockerfile: services/borrowing/Dockerfile
+    ports:
+      - "5001:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=catalogdb;Username=postgres;Password=1234"
-    ports:
-      - "8080:8080"
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=borrowingdb;Username=postgres;Password=1234"
+      RabbitMq__Host: "amqp://guest:guest@rabbitmq:5672"
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       postgres:
         condition: service_healthy
+    restart: always
+    networks:
+      - library-net
+
+  catalog-service:
+    container_name: catalog-service
+    build:
+      context: .
+      dockerfile: services/catalog/Dockerfile
+    ports:
+      - "5002:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=catalogdb;Username=postgres;Password=1234"
+      RabbitMq__Host: "amqp://guest:guest@rabbitmq:5672"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: always
+    networks:
+      - library-net
+
+  search-service:
+    container_name: search-service
+    build:
+      context: .
+      dockerfile: services/search/Dockerfile
+    ports:
+      - "5003:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      Elasticsearch__Url: "http://elasticsearch:9200"
+      RabbitMq__Host: "amqp://guest:guest@rabbitmq:5672"
+    depends_on:
+      elasticsearch:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    restart: always
+    networks:
+      - library-net
+
+  report-service:
+    container_name: report-service
+    build:
+      context: .
+      dockerfile: services/report/Dockerfile
+    ports:
+      - "5004:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:8080  
+      RabbitMq__Host: "amqp://guest:guest@rabbitmq:5672"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: always
+    networks:
+      - library-net
+
+    
+  krakend:
+    image: devopsfaith/krakend:2.9
+    container_name: krakend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./ApiGateway/krakend.json:/etc/krakend/krakend.json:ro
+    networks:
+    - library-net
+
+networks:
+  library-net:
+    driver: bridge
+
+volumes:
+  pgdata:
+  esdata:

@@ -1,5 +1,6 @@
-﻿using Application.Commands.Members;
+﻿using Application.DTO;
 using Application.Interfaces;
+using Domain.Books.Entities;
 using Domain.Members.Entities;
 using Domain.Members.Events;
 using Messages.Catalog.Events.Members;
@@ -12,35 +13,49 @@ namespace Presentation.Http.Members
     public static class RegisterMemberEndpoint
     {
         [WolverinePost("/api/catalog/members/register")]
-        public static (IResult, MemberRegisteredEvent, MemberRegisteredMessage) Register(
-            RegisterMemberCommand command,
-            [WriteAggregate(Required = false)] Member? member)
+        public static (IResult, Events, OutgoingMessages) Register(
+            RegisterMemberDto registerMember,
+            [WriteAggregate(Required = false)] Member member)
         {
-            if (string.IsNullOrWhiteSpace(command.FullName))
-                throw new Exception("Full name is required.");
 
-            if (string.IsNullOrWhiteSpace(command.Email))
-                throw new Exception("Email is required.");
+            var events = new Events();
+            var outgoing = new OutgoingMessages();
+            if (member != null)
+            {
+                return (
+                    Results.BadRequest(new { Message = $"Member with id {member.Id} already exists." }),
+                    events,
+                    outgoing
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(registerMember.FullName))
+                return (Results.BadRequest(new { Message = "Full name is required." }), events, outgoing);
+
+            if (string.IsNullOrWhiteSpace(registerMember.Email))
+                return (Results.BadRequest(new { Message = "Email is required." }), events, outgoing);
 
 
             var evt = new MemberRegisteredEvent(
-                 command.MemberId,
-                 command.FullName,
-                 command.Email
-             );
+                 registerMember.MemberId,
+                 registerMember.FullName,
+                 registerMember.Email
+            );
+            events.Add(evt);
 
             var msg = new MemberRegisteredMessage(
-                command.MemberId,
-                command.FullName,
-                command.Email,
+                registerMember.MemberId,
+                registerMember.FullName,
+                registerMember.Email,
                 true
             );
+            outgoing.Add(msg);
 
 
             return (
-                Results.Created($"/api/catalog/members/{command.MemberId}", new { command.MemberId }),
-                evt,
-                msg
+                Results.Created($"/api/catalog/members/{registerMember.MemberId}", new { registerMember.MemberId }),
+                events,
+                outgoing
             );
         }
     }

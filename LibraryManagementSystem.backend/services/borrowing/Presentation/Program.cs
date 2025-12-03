@@ -3,6 +3,7 @@ using Application.Mapper;
 using Infranstructure.Persistence;
 using Infranstructure.Projections;
 using JasperFx;
+using JasperFx.CodeGeneration;
 using JasperFx.Core;
 using JasperFx.Events.Projections;
 using Marten;
@@ -17,11 +18,23 @@ using Wolverine.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.AddJasperFx(cfg =>
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        cfg.Development.GeneratedCodeMode = TypeLoadMode.Dynamic;
+        cfg.Development.AssertAllPreGeneratedTypesExist = false;
 
-//builder.Services.AddControllers();
+    }
+    else
+    {
+        cfg.Production.GeneratedCodeMode = TypeLoadMode.Static;
+        cfg.Production.AssertAllPreGeneratedTypesExist = true;
+
+    }
+});
+
 builder.Services.AddAuthorization();
-
 builder.Services.AddWolverineHttp();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -37,10 +50,10 @@ builder.Services.AddSwaggerGen(c =>
 
 var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? "Host=localhost;Port=5432;Database=borrowingdb;Username=postgres;Password=1234";
 
-var rabbitMqHost = builder.Configuration["RabbitMq:Host"] ?? "amqp://guest:guest@localhost:5672";
+var rabbitMqHost =
 
-
-CreateDatabaseIfNotExists(connectionString);
+    builder.Configuration["RabbitMq:Host"] ??
+    "amqp://guest:guest@rabbitmq:5672";
 
 builder.Services.AddMarten(opts =>
 {
@@ -49,26 +62,26 @@ builder.Services.AddMarten(opts =>
     opts.AutoCreateSchemaObjects = AutoCreate.All;
 
     opts.Projections.Add<BorrowProjection>(ProjectionLifecycle.Inline);
+    opts.CreateDatabasesForTenants(c =>
+    {
+        c.MaintenanceDatabase(connectionString);
+        c.ForTenant()
+        .CheckAgainstPgDatabase()
+        .WithOwner("postgres")
+        .WithEncoding("UTF-8")
+        .ConnectionLimit(-1);
+    });
 })
 .IntegrateWithWolverine();
 
 
 builder.Host.UseWolverine(opts =>
 {
-    opts.UseRabbitMq(rabbitMqHost).AutoProvision().UseConventionalRouting();
-
-    //opts.PublishAllMessages().ToRabbitTopics("library.topics");
-
-    //opts.ListenToRabbitQueue("borrowing.catalog");
-
-    //opts.PublishAllMessages().ToRabbitTopics("library.topics", exchange =>
-    //{
-    //    exchange.BindTopic("catalog.*").ToQueue("borrowing.catalog");
-    //});
-
-    //opts.PublishAllMessages().ToRabbitQueue("borrowing-catalog");
-    //opts.ListenToRabbitQueue("catalog-borrowing");
-
+    opts.UseRabbitMq(rabbitMqHost).AutoProvision()
+   .UseConventionalRouting(x =>
+   {
+       x.QueueNameForListener(type => type.Name + "borrowing");
+   });
     opts.Policies.OnException<TimeoutException>().ScheduleRetry(5.Seconds());
 });
 
@@ -77,18 +90,13 @@ builder.Services.AddScoped<IReadStore, MartenReadStore>();
 builder.Services.AddAutoMapper(cfg => { },
     typeof(MappingProfile).Assembly);
 
-
-//builder.Services.AddOpenApi();
-
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-}
+    CreateDatabaseIfNotExists(connectionString);
 
-if (app.Environment.IsDevelopment())
-{
+    app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -97,17 +105,12 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-//if (app.Environment.IsDevelopment())
-//{
-//    app.MapOpenApi();
-//}
+
 
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
 app.MapWolverineEndpoints();
-
-//app.MapControllers();
 
 return await app.RunJasperFxCommands(args);
 
@@ -129,11 +132,11 @@ static void CreateDatabaseIfNotExists(string connectionString)
         {
             using var create = new NpgsqlCommand($"CREATE DATABASE \"{databaseName}\"", connection);
             create.ExecuteNonQuery();
-            Console.WriteLine($"✅ Database '{databaseName}' created automatically.");
+            Console.WriteLine($" Database '{databaseName}' created automatically.");
         }
         else
         {
-            Console.WriteLine($"ℹ️ Database '{databaseName}' already exists.");
+            Console.WriteLine($" Database '{databaseName}' already exists.");
         }
     }
 }

@@ -9,6 +9,11 @@ namespace Presentation.Consumer
     {
         public static BookLostEvent Handle(BookLostMessage message, [WriteAggregate] Book book)
         {
+
+            Console.BackgroundColor = ConsoleColor.Red;
+            Console.WriteLine(" catalog RECEIVED lostbook from borrowed:");
+            Console.ResetColor();
+
             return new BookLostEvent(
                message.BookId
            );

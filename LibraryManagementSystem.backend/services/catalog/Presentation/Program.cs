@@ -4,10 +4,12 @@ using ImTools;
 using Infranstructure.Persistence;
 using Infranstructure.Projections;
 using JasperFx;
+using JasperFx.CodeGeneration;
 using JasperFx.Core;
 using JasperFx.Events.Projections;
 using Marten;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using Oakton;
 using Presentation;
@@ -21,12 +23,24 @@ using Wolverine.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddJasperFx(cfg =>
+{
+    if (builder.Environment.IsDevelopment())
+    {
+        cfg.Development.GeneratedCodeMode = TypeLoadMode.Dynamic;
+        cfg.Development.AssertAllPreGeneratedTypesExist = false;
 
+    }
+    else
+    {
+        cfg.Production.GeneratedCodeMode = TypeLoadMode.Static;
+        cfg.Production.AssertAllPreGeneratedTypesExist = true;
 
-//builder.Services.AddControllers();
+    }
+});
+
 builder.Services.AddWolverineHttp();
 builder.Services.AddEndpointsApiExplorer();
-
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -40,10 +54,11 @@ builder.Services.AddSwaggerGen(c =>
 
 var connectionString = builder.Configuration.GetConnectionString("Postgres") ?? "Host=localhost;Port=5432;Database=catalogdb;Username=postgres;Password=1234";
 
-var rabbitMqHost = builder.Configuration["RabbitMq:Host"]?? "amqp://guest:guest@localhost:5672";
+var rabbitMqHost =
+    builder.Configuration["RabbitMq:Host"] ??
+    "amqp://guest:guest@rabbitmq:5672";
 
 
-CreateDatabaseIfNotExists(connectionString);
 
 builder.Services.AddMarten(opts =>
 {
@@ -53,6 +68,16 @@ builder.Services.AddMarten(opts =>
 
     opts.Projections.Add<BookProjection>(ProjectionLifecycle.Inline);
     opts.Projections.Add<MemberProjection>(ProjectionLifecycle.Inline);
+
+    opts.CreateDatabasesForTenants(c =>
+        {
+            c.MaintenanceDatabase(connectionString);
+            c.ForTenant()
+            .CheckAgainstPgDatabase()
+            .WithOwner("postgres")
+            .WithEncoding("UTF-8")
+            .ConnectionLimit(-1);
+        });
 })
 
 .IntegrateWithWolverine();
@@ -66,21 +91,12 @@ builder.Services.AddMartenStore<IApplicationStore>(opts =>
 
 builder.Host.UseWolverine(opts =>
 {
-    opts.UseRabbitMq(rabbitMqHost).AutoProvision().UseConventionalRouting();
+    opts.UseRabbitMq(rabbitMqHost).AutoProvision()
+    .UseConventionalRouting(x =>
+    {
+        x.QueueNameForListener(type => type.Name + "catalog");
+    });
 
-    //opts.PublishAllMessages().ToRabbitTopics("library.topics");
-
-    //opts.ListenToRabbitQueue("catalog.borrowing");
-
-    //opts.PublishAllMessages().ToRabbitTopics("library.topics", exchange =>
-    //{
-    //    exchange.BindTopic("borrowing.record.*").ToQueue("catalog.borrowing");
-    //});
-
-    //opts.PublishAllMessages().ToRabbitQueue("catalog-borrowing");
-    //opts.ListenToRabbitQueue("borrowing-catalog");
-
-    opts.Discovery.IncludeAssembly(typeof(IApplicationStore).Assembly);
     opts.Discovery.IncludeAssembly(typeof(Messages.Catalog.Events.Books.BookMadeAvailableMessage).Assembly);
 });
 
@@ -97,12 +113,14 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    CreateDatabaseIfNotExists(connectionString);
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Catalog Service API v1");
         c.RoutePrefix = string.Empty;
     });
+
 }
 
 app.UseHttpsRedirection();
@@ -110,18 +128,15 @@ app.UseHttpsRedirection();
 
 
 app.MapWolverineEndpoints();
-
-
 //app.Run();
 return await app.RunJasperFxCommands(args);
-
 
 
 static void CreateDatabaseIfNotExists(string connectionString)
 {
     var builder = new NpgsqlConnectionStringBuilder(connectionString);
     var databaseName = builder.Database;
-    builder.Database = "postgres"; 
+    builder.Database = "postgres";
 
     using var connection = new NpgsqlConnection(builder.ConnectionString);
     connection.Open();
@@ -134,11 +149,11 @@ static void CreateDatabaseIfNotExists(string connectionString)
         {
             using var create = new NpgsqlCommand($"CREATE DATABASE \"{databaseName}\"", connection);
             create.ExecuteNonQuery();
-            Console.WriteLine($"✅ Database '{databaseName}' created automatically.");
+            Console.WriteLine($" Database '{databaseName}' created automatically.");
         }
         else
         {
-            Console.WriteLine($"ℹ️ Database '{databaseName}' already exists.");
+            Console.WriteLine($" Database '{databaseName}' already exists.");
         }
     }
 }

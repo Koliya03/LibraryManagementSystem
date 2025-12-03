@@ -1,6 +1,6 @@
-﻿using Application.DTO;
-using AutoMapper;
+﻿using AutoMapper;
 using Domain.Entities;
+using Messages.Borrowing.Response;
 
 namespace Application.Mapper
 {

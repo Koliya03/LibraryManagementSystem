@@ -24,9 +24,9 @@ namespace Presentation.Http.Members
             }
 
             if (list.Count == 0)
-                return Results.NotFound("No members found.");
+                return Results.BadRequest(new { Message = "No members found." });
 
-            return Results.Ok(list);
+            return Results.Ok(new { list });
         }
 
         [WolverineGet("/api/catalog/members/{memberId:guid}")]
@@ -34,10 +34,10 @@ namespace Presentation.Http.Members
         {
             Member? model = await readStore.LoadAsync<Member>(memberId);
             if (model == null)
-                return Results.NotFound($"Member with ID {memberId} not found.");
+                return Results.BadRequest(new { Message = $"Member with ID {memberId} not found." });
 
             MemberResponseDto dto = mapper.Map<MemberResponseDto>(model);
-            return Results.Ok(dto);
+            return Results.Ok(new { dto });
         }
 
         [WolverineGet("/api/catalog/members/{memberId:guid}/status")]
@@ -45,10 +45,10 @@ namespace Presentation.Http.Members
         {
             Member? model = await readStore.LoadAsync<Member>(memberId);
             if (model == null)
-                return Results.NotFound($"Member with ID {memberId} not found.");
+                return Results.BadRequest(new { Message = $"Member with ID {memberId} not found." });
 
             MemberStatusDto dto = mapper.Map<MemberStatusDto>(model);
-            return Results.Ok(dto);
+            return Results.Ok(new { dto });
         }
     }
 }

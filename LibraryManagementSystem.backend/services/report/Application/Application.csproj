@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\borrowing\Message.Borrowing\Messages.Borrowing.csproj" />
+    <ProjectReference Include="..\..\catalog\Catalog.Messages\Messages.Catalog.csproj" />
+    <ProjectReference Include="..\Messages.Report\Messages.Report.csproj" />
+  </ItemGroup>
+
 </Project>

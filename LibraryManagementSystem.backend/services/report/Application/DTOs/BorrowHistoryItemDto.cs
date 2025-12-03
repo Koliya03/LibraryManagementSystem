@@ -1,0 +1,26 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Application.DTOs
+{
+    public class BorrowHistoryItemDto
+    {
+        public Guid BorrowId { get; set; }
+        public Guid MemberId { get; set; }
+        public Guid BookId { get; set; }
+
+        public DateTime BorrowDate { get; set; }
+        public DateTime DueDate { get; set; }
+        public DateTime? ReturnDate { get; set; }
+
+        public bool IsReturned { get; set; }
+        public bool IsLost { get; set; }
+        public decimal LateFee { get; set; }
+
+        public string Title { get; set; } = "";
+        public string Author { get; set; } = "";
+    }
+}
